@@ -82,12 +82,13 @@ describe('Gauges', () => {
     });
 
     it('should allow users to lock tokens in voting escrow', async () => {
-        expect(await votingEscrow['balanceOf(address)'](deployer.address)).to.be.equal(0);
-        await yaxis.approve(votingEscrow.address, ethers.constants.MaxUint256);
+        await yaxis.connect(deployer).transfer(user.address, ether('1'));
+        expect(await votingEscrow['balanceOf(address)'](user.address)).to.be.equal(0);
+        await yaxis.connect(user).approve(votingEscrow.address, ethers.constants.MaxUint256);
         const block = await ethers.provider.getBlockNumber();
         const { timestamp } = await ethers.provider.getBlock(block);
         await votingEscrow.create_lock(ether('1'), timestamp + MAXTIME);
-        expect(await votingEscrow['balanceOf(address)'](deployer.address)).to.be.above(
+        expect(await votingEscrow['balanceOf(address)'](user.address)).to.be.above(
             ether('0.98')
         );
     });
@@ -96,7 +97,9 @@ describe('Gauges', () => {
         expect(await gaugeController.get_gauge_weight(vaultStablesGauge.address)).to.be.equal(
             ether('1')
         );
-        await gaugeController.vote_for_gauge_weights(vaultStablesGauge.address, 10000);
+        await gaugeController
+            .connect(user)
+            .vote_for_gauge_weights(vaultStablesGauge.address, 10000);
         expect(await gaugeController.get_gauge_weight(vaultStablesGauge.address)).to.be.above(
             ether('0.97')
         );
